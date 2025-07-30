@@ -78,11 +78,14 @@ const Prompt = () => {
   }, []);
 
   useEffect(() => {
-    const userId = localStorage.getItem("userId");
-    if (!userId) {
-      window.location.href = "/login";
+    if (typeof window !== "undefined") {
+      const userId = localStorage.getItem("userId");
+      if (!userId) {
+        window.location.href = "/login";
+      }
     }
   }, []);
+  
 
   // useEffect(() => {
   //   async function fetchTables() {
