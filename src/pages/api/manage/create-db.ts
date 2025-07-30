@@ -15,12 +15,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     // 1. Create database if it doesn't exist on the target host
     const tempConn = await mysql.createConnection({
-      host:process.env.DB_HOST,
-      port: process.env.PORT ? parseInt(process.env.PORT) : 3306,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD ,
+      host: process.env.DB_HOST || process.env.MYSQLHOST,
+      port: process.env.PORT ? parseInt(process.env.PORT) : (process.env.MYSQLPORT ? parseInt(process.env.MYSQLPORT) : 3306),
+      user: process.env.DB_USER || process.env.MYSQLUSER,
+      password: process.env.DB_PASSWORD || process.env.MYSQLPASSWORD,
       multipleStatements: true,
     });
+
+
+    
 
     await tempConn.query(`CREATE DATABASE IF NOT EXISTS \`${db_name}\` CHARACTER SET utf8mb4`);
     await tempConn.end();
@@ -57,12 +60,21 @@ if (Array.isArray(rows) && rows.length > 0 && rows[0].managed_dbs) {
 
 
     // 3. Add new DB entry
+    // managedDbs.push({
+    //   host:process.env.DB_HOST,
+    //   port: process.env.PORT ? parseInt(process.env.PORT) : 3306,
+    //   db_name: db_name,
+    //   db_username: process.env.DB_USER,
+    //   db_password: process.env.DB_PASSWORD,
+    //   isActive: false,
+    // });
+
     managedDbs.push({
-      host:process.env.DB_HOST,
-      port: process.env.PORT ? parseInt(process.env.PORT) : 3306,
+      host: process.env.DB_HOST || process.env.MYSQLHOST,
+      port: process.env.PORT ? parseInt(process.env.PORT) : (process.env.MYSQLPORT ? parseInt(process.env.MYSQLPORT) : 3306),
       db_name: db_name,
-      db_username: process.env.DB_USER,
-      db_password: process.env.DB_PASSWORD,
+      db_username: process.env.DB_USER || process.env.MYSQLUSER,
+      db_password:  process.env.DB_PASSWORD || process.env.MYSQLPASSWORD,
       isActive: false,
     });
 

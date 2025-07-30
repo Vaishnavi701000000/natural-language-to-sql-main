@@ -81,14 +81,15 @@ import crypto from "crypto";
 
 // You must not specify the database in the initial pool connection so you can CREATE it
 const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+  host: process.env.DB_HOST || process.env.MYSQLHOST,
+  user: process.env.DB_USER || process.env.MYSQLUSER,
+  password: process.env.DB_PASSWORD || process.env.MYSQLPASSWORD,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
   // DON'T specify database here yet
 });
+
 
 async function ensureDatabaseAndTable() {
   // 1. Create DB if not exists

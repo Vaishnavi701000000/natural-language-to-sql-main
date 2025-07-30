@@ -26,10 +26,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     connection = await mysql.createConnection({
-      host: process.env.DB_HOST || "localhost",
-      user: process.env.DB_USER || "root",
-      password: process.env.DB_PASSWORD || "Ramyam01",
-      database: process.env.CONFIG_DB_NAME || "config_db",
+      // host: process.env.DB_HOST || "localhost",
+      // user: process.env.DB_USER || "root",
+      // password: process.env.DB_PASSWORD || "Ramyam01",
+      // database: process.env.CONFIG_DB_NAME || "config_db",
+      host: process.env.DB_HOST || process.env.MYSQLHOST,
+  port: process.env.PORT ? parseInt(process.env.PORT) : (process.env.MYSQLPORT ? parseInt(process.env.MYSQLPORT) : 3306),
+  user: process.env.DB_USER || process.env.MYSQLUSER,
+  password: process.env.DB_PASSWORD || process.env.MYSQLPASSWORD,
+  database: process.env.DB_NAME || process.env.MYSQLDATABASE,
     });
 
     // ✅ Select all relevant fields matching your updated schema
