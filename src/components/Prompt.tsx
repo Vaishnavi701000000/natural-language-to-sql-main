@@ -102,23 +102,27 @@ const Prompt = () => {
   // }, []);
 
   useEffect(() => {
-  async function fetchTables() {
-    try {
-      const userId = localStorage.getItem("userId");
-      if (!userId) {
-        showNotification("No userId found in local storage", "error");
-        return;
+    async function fetchTables() {
+      try {
+        if (typeof window !== "undefined") {
+          const userId = localStorage.getItem("userId");
+          if (!userId) {
+            showNotification("No userId found in local storage", "error");
+            return;
+          }
+          const res = await fetch(`/api/tables?userId=${encodeURIComponent(userId)}`);
+          const data = await res.json();
+          setTables(data.tables || []);
+        }
+      } catch (error) {
+        console.error("Error fetching tables", error);
+        showNotification("Error fetching tables", "error");
       }
-      const res = await fetch(`/api/tables?userId=${encodeURIComponent(userId)}`);
-      const data = await res.json();
-      setTables(data.tables || []);
-    } catch (error) {
-      console.error("Error fetching tables", error);
-      showNotification("Error fetching tables", "error");
     }
-  }
-  fetchTables();
-}, []);
+  
+    fetchTables();
+  }, []);
+  
 
 
   useEffect(() => {
@@ -198,7 +202,6 @@ const Prompt = () => {
   
       const res = await response.json();
   
-      // ✅ Check for error or message returned from backend
       const errorMsg = (res.error || res.message || "").toLowerCase();
   
       if (res.error || res.message) {
@@ -223,6 +226,7 @@ const Prompt = () => {
       setIsLoading(false);
     }
   };
+  
   
 //   const handleCreateNewDb = async () => {
 //   const userId = localStorage.getItem('userId');
@@ -259,84 +263,102 @@ const Prompt = () => {
 
 
   
-  const handleShowMyDbs = async () => {
-    try {
-      const userId = localStorage.getItem("userId");
-      if (!userId) {
-        showNotification("No userId found in local storage", "error");
-        return;
-      }
-      const res = await fetch(`/api/manage/show-dbs?userId=${userId}`);
-      const data = await res.json();
-      setMyDatabases(data.databases || []);
-      setDatabasesFetched(true);
-      if (!data.databases || data.databases.length === 0) {
-        showNotification("No databases found for this user", "info");
-      }
-    } catch (error) {
-      console.error("Error fetching databases", error);
-      setDatabasesFetched(true);
-      showNotification("Error fetching databases", "error");
-    }
-  };
+const handleShowMyDbs = async () => {
+  try {
+    if (typeof window === "undefined") return;
 
-    const handleCreateNewDb = async () => {
     const userId = localStorage.getItem("userId");
     if (!userId) {
       showNotification("No userId found in local storage", "error");
       return;
     }
-    if (!dbNameInput.trim()) {
-      showNotification("Please enter a database name", "error");
-      return;
-    }
 
-    try {
-      const res = await fetch("/api/manage/create-db", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, db_name: dbNameInput.trim() }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        showNotification(data.message, "success");
-        setShowForm(false);
-        setDbNameInput("");
-        handleShowMyDbs(); // Refresh DB list after creation
-      } else {
-        showNotification(data.message, "error");
-      }
-    } catch {
-      showNotification("Failed to create database", "error");
-    }
-    }
+    const res = await fetch(`/api/manage/show-dbs?userId=${userId}`);
+    const data = await res.json();
+    setMyDatabases(data.databases || []);
+    setDatabasesFetched(true);
 
-  const handleToggleDb = async (index: number) => {
-    const updated = myDatabases.map((db, i) => ({
-      ...db,
-      isActive: i === index,
-    }));
-    setMyDatabases(updated);
-    setActiveDb(updated[index]);
-  
-    const userId = localStorage.getItem("userId");
-    if (userId) {
-      try {
-        await fetch("/api/manage/update-dbs", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId,
-            managed_dbs: updated,
-          }),
-        });
-        showNotification(`Database ${updated[index].db_name} is now active`, "success");
-      } catch (error) {
-        console.error("Error updating database status", error);
-        showNotification("Error updating database status", "error");
-      }
+    if (!data.databases || data.databases.length === 0) {
+      showNotification("No databases found for this user", "info");
     }
-  };
+  } catch (error) {
+    console.error("Error fetching databases", error);
+    setDatabasesFetched(true);
+    showNotification("Error fetching databases", "error");
+  }
+};
+
+
+const handleCreateNewDb = async () => {
+  if (typeof window === "undefined") return;
+
+  const userId = localStorage.getItem("userId");
+  if (!userId) {
+    showNotification("No userId found in local storage", "error");
+    return;
+  }
+
+  if (!dbNameInput.trim()) {
+    showNotification("Please enter a database name", "error");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/manage/create-db", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, db_name: dbNameInput.trim() }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      showNotification(data.message, "success");
+      setShowForm(false);
+      setDbNameInput("");
+      handleShowMyDbs(); // Refresh DB list after creation
+    } else {
+      showNotification(data.message, "error");
+    }
+  } catch {
+    showNotification("Failed to create database", "error");
+  }
+};
+
+
+const handleToggleDb = async (index: number) => {
+  const updated = myDatabases.map((db, i) => ({
+    ...db,
+    isActive: i === index,
+  }));
+
+  setMyDatabases(updated);
+  setActiveDb(updated[index]);
+
+  if (typeof window === "undefined") return; // ⛑️ Prevent server-side crash
+
+  const userId = localStorage.getItem("userId");
+  if (!userId) {
+    showNotification("No userId found in local storage", "error");
+    return;
+  }
+
+  try {
+    await fetch("/api/manage/update-dbs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId,
+        managed_dbs: updated,
+      }),
+    });
+
+    showNotification(`Database ${updated[index].db_name} is now active`, "success");
+  } catch (error) {
+    console.error("Error updating database status", error);
+    showNotification("Error updating database status", "error");
+  }
+};
+
   
   // const handleTableClick = async (tableName: string, dbName: string) => {
   //   setSelectedTable(tableName);
@@ -357,34 +379,43 @@ const Prompt = () => {
   // };
 
   const handleTableClick = async (tableName: string, dbName: string) => {
-  setSelectedTable(tableName);
-  setIsLoading(true);
-
-  try {
-    const userId = localStorage.getItem("userId");
-    if (!userId) {
-      showNotification("No userId found in local storage", "error");
+    setSelectedTable(tableName);
+    setIsLoading(true);
+  
+    try {
+      if (typeof window === "undefined") return;
+  
+      const userId = localStorage.getItem("userId");
+      if (!userId) {
+        showNotification("No userId found in local storage", "error");
+        setIsLoading(false);
+        return;
+      }
+  
+      const res = await fetch(
+        `/api/table-data?table=${encodeURIComponent(tableName)}&db=${encodeURIComponent(dbName)}&userId=${encodeURIComponent(userId)}`
+      );
+  
+      if (!res.ok) {
+        throw new Error("Network response was not ok");
+      }
+  
+      const data = await res.json();
+  
+      if (!data.rows || data.rows.length === 0) {
+        showNotification(`No data found in table ${tableName}`, "info");
+      }
+  
+      setTableData(data.rows || []);
+    } catch (error) {
+      console.error("Error loading table data:", error);
+      setTableData([{ error: "Failed to load table data" }]);
+      showNotification("Failed to load table data", "error");
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    const res = await fetch(
-      `/api/table-data?table=${encodeURIComponent(tableName)}&db=${encodeURIComponent(dbName)}&userId=${encodeURIComponent(userId)}`
-    );
-    const data = await res.json();
-
-    setTableData(data.rows || []);
-
-    if (!data.rows || data.rows.length === 0) {
-      showNotification(`No data found in table ${tableName}`, "info");
-    }
-  } catch (error) {
-    setTableData([{ error: "Failed to load table data" }]);
-    showNotification("Failed to load table data", "error");
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
+  
 
 
   const handleClear = () => {

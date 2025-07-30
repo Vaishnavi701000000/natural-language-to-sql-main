@@ -60,3 +60,7 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+export const getServerSideProps = async () => {
+  return { props: {} };
+};
