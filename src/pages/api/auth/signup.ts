@@ -93,9 +93,9 @@ const pool = mysql.createPool({
 
 async function ensureDatabaseAndTable() {
   // 1. Create DB if not exists
-  await pool.query(`CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+  await pool.query(`CREATE DATABASE IF NOT EXISTS ${process.env.MYSQLDATABASE} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
   // 2. Use the DB for subsequent queries
-  await pool.query(`USE ${process.env.DB_NAME}`);
+  await pool.query(`USE ${process.env.MYSQLDATABASE}`);
   // 3. Create the users table if not exists
 await pool.query(`
   CREATE TABLE IF NOT EXISTS users (
@@ -125,7 +125,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Now connect again, but specify database for type-safe queries if needed
     // If using a singleton pool with database in config, you can skip this line next time.
-    await pool.query(`USE ${process.env.DB_NAME}`);
+    await pool.query(`USE ${process.env.MYSQLDATABASE}`);
 
     await pool.query(
       "INSERT INTO users (userId, password, role, managed_dbs) VALUES (?, ?, ?, JSON_ARRAY())",
