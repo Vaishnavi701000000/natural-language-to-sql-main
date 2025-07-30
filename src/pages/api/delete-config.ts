@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { configPool } from "@/lib/db";
+import {pool as configPool } from "@/lib/db";
 import fs from "fs";
 import path from "path";
 
