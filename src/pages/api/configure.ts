@@ -90,7 +90,8 @@
 // }
 import type { NextApiRequest, NextApiResponse } from "next";
 // import { userPool } from "@/lib/db";
-import { configPool } from "@/lib/db";
+import { pool as configPool } from "@/lib/db"; // ✅ ALIAS
+
 
 import fs from "fs";
 import path from "path";
